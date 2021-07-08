@@ -85,9 +85,10 @@ class Header{
 
     }
 
-    Header(int ID, int OPCODE, string QR, string AA, string TC, string RD, string RA, string Z, int RCODE, int QDCOUNT, int ANCOUNT, int NSCOUNT, int ARCOUNT){
+    Header(int ID, string QR, int OPCODE, string AA, string TC, string RD, string RA, string Z, int RCODE, int QDCOUNT, int ANCOUNT, int NSCOUNT, int ARCOUNT){
         this->ID = ID;
         this->QR = QR;
+        this->OPCODE = OPCODE;
         this->AA = AA;
         this->TC = TC;
         this->RD = RD;
@@ -102,8 +103,8 @@ class Header{
 
     string getBinaryRepresentation(){
         string binaryStr =  decToBinary(this->ID, 16) + 
-                            decToBinary(this->OPCODE, 4) + 
                             this->QR +
+                            decToBinary(this->OPCODE, 4) + 
                             this->AA + 
                             this->TC + 
                             this->RD + 
@@ -135,9 +136,9 @@ class Question{
 
     }
 
-    Question(string domainName, string queryType, string queryClass){
+    Question(string domainName, int queryType){
         this->QNAME = convertDomainNameToBinary(domainName);
-        this->QTYPE = decToBinary(1, 16); // for Type A, will try 255 also
+        this->QTYPE = decToBinary(queryType, 16); // for Type A, will try 255 also
         this->QCLASS = decToBinary(1, 16); // for IN class
     }
 
@@ -153,13 +154,47 @@ class Question{
     
 };
 
-class Query {
+class DNSQuery {
     public:
+    
+    int id;
+    int opcode;
+    int responseCode;
+    int qdCount;
+    int anCount;
+    int nsCount;
+    int arCount;
+    string domainName;
+    int queryType;
+    int headerLength;
+    int questionLength;
 
-    string id;
-
-    Query() {
+    DNSQuery(int opcode, int responseCode, int qdCount, int anCount, int nsCount, int arCount, string domainName, int queryType){
+        
+        this->id = rand() % 65536;
+        this->opcode = opcode;
+        this->responseCode = responseCode;
+        this->qdCount = qdCount;
+        this->anCount = anCount;
+        this->nsCount = nsCount;
+        this->arCount = arCount;
+        this->domainName = domainName;
+        this->queryType = queryType;
 
     }
 
+    string getDNSQuery(){
+        
+        Header header(this->id, "0", this->opcode, "0", "0", "1", "0", "000", this->responseCode, this->qdCount, this->anCount, this->nsCount, this->arCount);
+        Question question(this->domainName, this->queryType);
+
+        string headerHexString = header.getHexRepresentation();
+        this->headerLength = headerHexString.length();
+
+        string questionHexString = question.getHexRepresentation();
+        this->questionLength = questionHexString.length();
+
+        string dnsQueryHexString = headerHexString + questionHexString;
+        return dnsQueryHexString;
+    }
 };
